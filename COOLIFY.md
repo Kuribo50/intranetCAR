@@ -8,7 +8,7 @@ Esta guía explica cómo desplegar tu aplicación Next.js en Coolify con persist
 2. Haz clic en **+ New** -> **Git Repository** (GitHub).
 3. Selecciona tu repositorio: `Kuribo50/intranetCAR`.
 4. Rama (Branch): `main`.
-5. Build Pack: **Docker Compose** (Coolify debería detectarlo automáticamente, pero verifícalo).
+5. Build Pack: **Dockerfile** (Coolify debería detectarlo automáticamente).
 
 ## 2. Configuración (Antes de Desplegar)
 
@@ -30,7 +30,8 @@ Agrega los siguientes secretos (secrets):
 
 ### Almacenamiento Persistente (Crucial para SQLite)
 
-Para evitar que tu base de datos se borre cada vez que despliegues una actualización, DEBES configurar un volumen.
+cada vez que
+Para evitar que tu base de datos se borre despliegues una actualización, DEBES configurar un volumen.
 
 1. Ve a la pestaña **Storage**.
 2. Agrega un nuevo Volumen Persistente (Persistent Volume):
