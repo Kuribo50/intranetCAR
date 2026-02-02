@@ -1,39 +1,45 @@
-# Deploying to Coolify
+# Despliegue en Coolify
 
-This guide explains how to deploy your Next.js application to Coolify with SQLite persistence.
+Esta guía explica cómo desplegar tu aplicación Next.js en Coolify con persistencia de datos SQLite.
 
-## 1. Add Repository in Coolify
+## 1. Agregar Repositorio en Coolify
 
-1. Go to your Project in Coolify environment.
-2. Click **+ New** -> **Git Repository** (GitHub).
-3. Select your repository: `Kuribo50/intranetCAR`.
-4. Branch: `main`.
-5. Build Pack: **Docker Compose** (Coolify might auto-detect Dockerfile, but verify).
+1. Ve a tu Proyecto en el entorno de Coolify.
+2. Haz clic en **+ New** -> **Git Repository** (GitHub).
+3. Selecciona tu repositorio: `Kuribo50/intranetCAR`.
+4. Rama (Branch): `main`.
+5. Build Pack: **Docker Compose** (Coolify debería detectarlo automáticamente, pero verifícalo).
 
-## 2. Configuration (Before Deploying)
+## 2. Configuración (Antes de Desplegar)
 
-Before you click deploy, go to the **Configuration** tab of your service in Coolify.
+Antes de hacer clic en deploy, ve a la pestaña **Configuration** de tu servicio en Coolify.
 
-### Environment Variables (.env)
+### Dominios
 
-Add the following stored secrets:
+En el campo **Domains**, ingresa tu dominio:
+
+- `https://albertoreyes.cl`
+
+### Variables de Entorno (.env)
+
+Agrega los siguientes secretos (secrets):
 
 - `DATABASE_URL="file:/app/prisma/dev.db"`
-- `NEXTAUTH_SECRET` (Generate one: `openssl rand -base64 32`)
-- `NEXTAUTH_URL` (Your full Coolify domain, e.g., `https://intranet.tu-dominio.com`)
+- `NEXTAUTH_SECRET` (Genera uno: puedes ejecutar `openssl rand -base64 32` en tu terminal para obtener uno seguro)
+- `NEXTAUTH_URL="https://albertoreyes.cl"`
 
-### Persistent Storage (Crucial for SQLite)
+### Almacenamiento Persistente (Crucial para SQLite)
 
-To prevent your database from being deleted every time you deploy, you MUST map a volume.
+Para evitar que tu base de datos se borre cada vez que despliegues una actualización, DEBES configurar un volumen.
 
-1. Go to **Storage**.
-2. Add a new Persistent Volume:
-   - **Source Path**: (Leave empty for auto-generated, or specify a path on the host like `/data/coolify/applications/intranet-car/db`)
+1. Ve a la pestaña **Storage**.
+2. Agrega un nuevo Volumen Persistente (Persistent Volume):
+   - **Source Path**: (Déjalo vacío para auto-generado, o especifica una ruta en tu servidor como `/data/coolify/applications/intranet-car/db`)
    - **Destination Path**: `/app/prisma`
-3. Save.
+3. Guarda los cambios.
 
-## 3. Deploy
+## 3. Desplegar
 
-Click **Deploy**.
+Haz clic en **Deploy**.
 
-The Dockerfile is configured to automatically run `npx prisma migrate deploy` on startup, so your database schema will be applied automatically.
+El `Dockerfile` está configurado para ejecutar automáticamente `npx prisma migrate deploy` al iniciar, por lo que los cambios en la estructura de tu base de datos se aplicarán automáticamente.
