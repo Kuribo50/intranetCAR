@@ -1,118 +1,246 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift, Cake, Plus, Calendar } from "lucide-react";
+import { Cake, Heart, ChevronLeft, ChevronRight, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// Actually, let's use standard div with overflow for safety if ScrollArea isn't confirmed.
-// User didn't ask for Shadcn ScrollArea specifically, but "premium". standard custom scrollbar is fine.
+import { cn } from "@/lib/utils";
+import * as React from "react";
 
-// Mock Data
-const birthdays = [
-  {
-    name: "Dra. Ana López",
-    date: "Hoy",
-    department: "Medicina",
-    image: null,
-    age: 34,
-  },
-  {
-    name: "Carlos Ruiz",
-    date: "Mañana",
-    department: "Informática",
-    image: null,
-    age: 29,
-  },
-  {
-    name: "Enf. María Pérez",
-    date: "18 Ene",
-    department: "Enfermería",
-    image: null,
-    age: 45,
-  },
-  {
-    name: "Dr. Juan Soto",
-    date: "20 Ene",
-    department: "Urgencias",
-    image: null,
-    age: 52,
-  },
-  {
-    name: "Téc. Pedro Diaz",
-    date: "22 Ene",
-    department: "Dental",
-    image: null,
-    age: 30,
-  },
-];
+interface BirthdayEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  startDate: string;
+  type: string;
+}
 
-export function Birthdays() {
+const formatBirthdayDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const eventDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
+  const todayDate = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+  const tomorrowDate = new Date(
+    tomorrow.getFullYear(),
+    tomorrow.getMonth(),
+    tomorrow.getDate(),
+  );
+
+  if (eventDate.getTime() === todayDate.getTime()) {
+    return "Hoy";
+  }
+  if (eventDate.getTime() === tomorrowDate.getTime()) {
+    return "Mañana";
+  }
+
+  return date.toLocaleDateString("es-CL", {
+    day: "numeric",
+    month: "short",
+  });
+};
+
+const getDepartmentFromDescription = (description: string | null): string => {
+  if (!description) return "General";
+  const desc = description.toLowerCase();
+  if (desc.includes("medicina") || desc.includes("médico")) return "Medicina";
+  if (desc.includes("informática") || desc.includes("informatica"))
+    return "Informática";
+  if (desc.includes("enfermería") || desc.includes("enfermeria"))
+    return "Enfermería";
+  if (desc.includes("urgencia")) return "Urgencias";
+  if (desc.includes("dental")) return "Dental";
+  return description;
+};
+
+interface BirthdaysProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export function Birthdays({ collapsed, onToggle }: BirthdaysProps) {
+  const [birthdays, setBirthdays] = React.useState<BirthdayEvent[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchBirthdays() {
+      try {
+        const today = new Date();
+        const nextMonth = new Date(today);
+        nextMonth.setDate(nextMonth.getDate() + 5);
+
+        const response = await fetch(
+          `/api/events?type=BIRTHDAY&startDate=${today.toISOString()}&endDate=${nextMonth.toISOString()}`,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setBirthdays(data.slice(0, 5));
+        }
+      } catch (error) {
+        console.error("Error fetching birthdays:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBirthdays();
+    const interval = setInterval(fetchBirthdays, 300000); // Check every 5 minutes
+    return () => clearInterval(interval);
+  }, []);
+
+  if (collapsed) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full w-full py-2 group">
+        <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 group-hover:scale-105 transition-all">
+          <Gift className="h-6 w-6 text-pink-500" />
+        </div>
+        <span className="mt-2 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+          Cumpleaños
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm ring-1 ring-slate-200/60 sticky top-24 overflow-hidden">
-      <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between px-4 py-4 bg-gradient-to-r from-pink-50 to-white">
-        <div className="flex items-center gap-3">
-          <div className="bg-pink-100 p-2 rounded-full ring-2 ring-pink-200/50">
-            <Cake className="h-5 w-5 text-pink-500" />
-          </div>
-          <div>
-            <CardTitle className="text-lg font-bold text-slate-800">
-              Cumpleaños
-            </CardTitle>
-            <p className="text-xs text-slate-500 font-medium">
-              Próximas celebraciones
-            </p>
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-slate-400 hover:text-pink-600 hover:bg-pink-50 rounded-full"
-          title="Agregar Cumpleaños"
-        >
-          <Plus className="h-5 w-5" />
-        </Button>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="max-h-[300px] overflow-y-auto custom-scrollbar p-4 space-y-4">
-          {birthdays.map((person, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 group p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 cursor-default"
-            >
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:scale-110 transition-transform ring-2 ring-white">
-                {person.name.charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 truncate">
-                  {person.name}
-                </p>
-                <p className="text-xs text-slate-500 truncate">
-                  {person.department}
-                </p>
-              </div>
-              <div className="flex flex-col items-end">
-                <span
-                  className={`text-xs font-bold px-2 py-1 rounded-full ${
-                    person.date === "Hoy"
-                      ? "bg-pink-100 text-pink-700 animate-pulse"
-                      : "bg-slate-100 text-slate-600"
-                  }`}
-                >
-                  {person.date}
-                </span>
-              </div>
+    <div className="w-full transition-all duration-300">
+      <Card className="border-0 shadow-lg bg-white/90 dark:bg-slate-800 backdrop-blur-md ring-1 ring-slate-100/50 dark:ring-slate-700 overflow-hidden relative">
+        {/* Decorative Header Background */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-400 via-rose-400 to-purple-400" />
+
+        <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-gradient-to-br from-pink-100 to-rose-100 dark:from-pink-900/30 dark:to-rose-900/30 p-2 rounded-xl text-pink-600 dark:text-pink-400 shadow-sm ring-1 ring-pink-50 dark:ring-pink-900/20">
+              <Gift className="h-4 w-4" />
             </div>
-          ))}
-        </div>
-        <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+            <div>
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                Cumpleaños
+              </CardTitle>
+              {!collapsed && (
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                  Celebraciones cercanas
+                </p>
+              )}
+            </div>
+          </div>
           <Button
-            variant="outline"
-            className="w-full text-xs h-8 border-slate-200 text-slate-600 hover:text-pink-600 hover:border-pink-200"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full"
+            onClick={onToggle}
           >
-            <Calendar className="h-3 w-3 mr-2" />
-            Ver Calendario Completo
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardHeader>
+
+        {!collapsed && (
+          <CardContent className="p-4 pt-2">
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 animate-pulse"
+                  >
+                    <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-700" />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-3 w-2/3 bg-slate-100 dark:bg-slate-700 rounded" />
+                      <div className="h-2 w-1/3 bg-slate-100 dark:bg-slate-700 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : birthdays.length === 0 ? (
+              <div className="text-center py-6 text-slate-500 dark:text-slate-400 text-sm bg-slate-50/50 dark:bg-slate-700/30 rounded-xl border border-slate-100 dark:border-slate-700 border-dashed">
+                <Cake className="h-8 w-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+                No hay cumpleaños próximos.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {birthdays.map((person) => {
+                  const dateStr = formatBirthdayDate(person.startDate);
+                  const department = getDepartmentFromDescription(
+                    person.description,
+                  );
+                  const isToday = dateStr === "Hoy";
+
+                  return (
+                    <div
+                      key={person.id}
+                      className={cn(
+                        "flex items-center gap-3 p-2 rounded-xl transition-all duration-200 group border",
+                        isToday
+                          ? "bg-gradient-to-r from-pink-50/80 to-rose-50/50 dark:from-pink-900/20 dark:to-rose-900/10 border-pink-100 dark:border-pink-900/30 hover:border-pink-200 dark:hover:border-pink-800 shadow-sm"
+                          : "bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700 border-transparent hover:border-slate-100 dark:hover:border-slate-600",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "h-9 w-9 flex-shrink-0 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm ring-2 ring-white dark:ring-slate-700 transition-transform group-hover:scale-105",
+                          isToday
+                            ? "bg-gradient-to-br from-pink-500 to-rose-500 animate-[pulse_3s_ease-in-out_infinite]"
+                            : "bg-gradient-to-br from-indigo-400 to-blue-400",
+                        )}
+                      >
+                        {person.title.charAt(0)}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-tight truncate">
+                            {person.title}
+                          </p>
+                          <span
+                            className={cn(
+                              "text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1 flex-shrink-0",
+                              isToday
+                                ? "bg-pink-100 dark:bg-pink-900/50 text-pink-700 dark:text-pink-300"
+                                : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300",
+                            )}
+                          >
+                            {dateStr}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                          {department}
+                        </p>
+                      </div>
+
+                      {/* Button removed to avoid login requirements */}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 text-center">
+              <Button
+                variant="link"
+                size="sm"
+                className="text-xs text-slate-400 dark:text-slate-500 h-auto p-0 hover:text-pink-500 dark:hover:text-pink-400"
+              >
+                Ver calendario completo
+              </Button>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Fallback space filler if collapsed to prevent layout shifts if needed, 
+          but grid column handles width mostly. 
+      */}
+    </div>
   );
 }

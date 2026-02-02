@@ -769,7 +769,7 @@ export const contacts: Contact[] = [
 
 // Get unique departments
 export const departments = Array.from(
-  new Set(contacts.map((c) => c.department))
+  new Set(contacts.map((c) => c.department)),
 );
 
 // Department color mapping
@@ -797,7 +797,7 @@ export const getDepartmentColor = (department: string): string => {
 };
 // Department header style mapping (for grid view) - using inline styles to avoid Tailwind purging
 export const getDepartmentHeaderStyle = (
-  department: string
+  department: string,
 ): React.CSSProperties => {
   if (department.includes("Rojo"))
     return { backgroundColor: "#dc2626", color: "#ffffff" };

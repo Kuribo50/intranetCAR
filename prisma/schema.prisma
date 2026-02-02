@@ -1,0 +1,302 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Announcement {
+  id        String    @id
+  title     String
+  content   String
+  type      String    @default("INFO")
+  priority  Int       @default(0)
+  pinned    Boolean   @default(false)
+  active    Boolean   @default(true)
+  expiresAt DateTime?
+  authorId  String
+  mediaId   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  User      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  Media     Media?    @relation(fields: [mediaId], references: [id])
+
+  @@index([expiresAt])
+  @@index([priority])
+  @@index([type])
+  @@index([active])
+  @@index([authorId])
+}
+
+model CarouselImage {
+  id               String   @id
+  title            String?
+  description      String?
+  linkUrl          String?
+  linkType         String?
+  order            Int      @default(0)
+  active           Boolean  @default(true)
+  pinned           Boolean  @default(false)
+  autoPlayDuration Int      @default(5)
+  authorId         String
+  mediaId          String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime
+  User             User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  Media            Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([pinned])
+  @@index([order])
+  @@index([active])
+  @@index([authorId])
+}
+
+model Contact {
+  id          String   @id
+  name        String
+  department  String
+  extension   String
+  category    String
+  email       String?
+  phone       String?
+  position    String?
+  location    String?
+  description String?
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  User        User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([department])
+  @@index([authorId])
+}
+
+model Event {
+  id          String    @id
+  title       String
+  description String?
+  type        String
+  startDate   DateTime
+  endDate     DateTime?
+  allDay      Boolean   @default(false)
+  location    String?
+  estamento   String?
+  programa    String?
+  authorId    String
+  mediaId     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  User        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  Media       Media?    @relation(fields: [mediaId], references: [id])
+
+  @@index([startDate])
+  @@index([type])
+  @@index([authorId])
+}
+
+model Link {
+  id              String   @id
+  title           String
+  description     String?
+  url             String
+  icon            String?
+  category        String?
+  backgroundColor String?
+  imageSize       Int      @default(0)
+  order           Int      @default(0)
+  active          Boolean  @default(true)
+  authorId        String
+  mediaId         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime
+  User            User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  Media           Media?   @relation(fields: [mediaId], references: [id])
+
+  @@index([category])
+  @@index([active])
+  @@index([authorId])
+}
+
+model Media {
+  id              String            @id @default(cuid())
+  filename        String
+  originalName    String
+  path            String
+  type            String
+  mimeType        String
+  size            Int
+  width           Int?
+  height          Int?
+  alt             String?
+  authorId        String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @default(now()) @updatedAt
+  Announcement    Announcement[]
+  CarouselImage   CarouselImage[]
+  Event           Event[]
+  Link            Link[]
+  User            User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  Post            Post[]
+  MeetingRoom     MeetingRoom[]
+  Establecimiento Establecimiento[]
+  estamentos      Estamento[]
+
+  @@index([type])
+  @@index([authorId])
+}
+
+model Notification {
+  id        String   @id
+  title     String
+  message   String
+  type      String   @default("INFO")
+  link      String?
+  read      Boolean  @default(false)
+  global    Boolean  @default(false)
+  userId    String?
+  createdAt DateTime @default(now())
+  User      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([global])
+  @@index([read])
+  @@index([userId])
+}
+
+model Post {
+  id          String    @id
+  title       String
+  content     String?
+  description String?
+  status      String    @default("DRAFT")
+  featured    Boolean   @default(false)
+  order       Int       @default(0)
+  authorId    String
+  mediaId     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  publishedAt DateTime?
+  User        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  Media       Media?    @relation(fields: [mediaId], references: [id])
+
+  @@index([featured])
+  @@index([status])
+  @@index([authorId])
+}
+
+model User {
+  id                 String           @id
+  rut                String           @unique
+  email              String?          @unique
+  name               String
+  apellidos          String?
+  phone              String?
+  password           String
+  mustChangePassword Boolean          @default(true)
+  role               String           @default("USER")
+  active             Boolean          @default(true)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime
+  establecimientoId  String?
+  estamentoId        String?
+  programaId         String?
+  Announcement       Announcement[]
+  CarouselImage      CarouselImage[]
+  Contact            Contact[]
+  Event              Event[]
+  Link               Link[]
+  Media              Media[]
+  MeetingRoom        MeetingRoom[]
+  Notification       Notification[]
+  Post               Post[]
+  Programa           Programa?        @relation(fields: [programaId], references: [id])
+  Estamento          Estamento?       @relation(fields: [estamentoId], references: [id])
+  Establecimiento    Establecimiento? @relation(fields: [establecimientoId], references: [id])
+
+  @@index([role])
+  @@index([email])
+  @@index([establecimientoId])
+  @@index([estamentoId])
+  @@index([programaId])
+}
+
+model Estamento {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  order       Int           @default(0)
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  address     String?
+  mediaId     String?
+  User        User[]
+  MeetingRoom MeetingRoom[]
+  Media       Media?        @relation(fields: [mediaId], references: [id])
+
+  @@index([active])
+  @@index([order])
+  @@index([mediaId])
+}
+
+model Establecimiento {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  order       Int           @default(0)
+  active      Boolean       @default(true)
+  address     String?
+  mediaId     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  User        User[]
+  MeetingRoom MeetingRoom[]
+  media       Media?        @relation(fields: [mediaId], references: [id])
+
+  @@index([active])
+  @@index([order])
+  @@index([mediaId])
+}
+
+model Programa {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User[]
+
+  @@index([active])
+  @@index([order])
+}
+
+model MeetingRoom {
+  id                String           @id @default(cuid())
+  name              String           @unique
+  capacity          Int              @default(6)
+  amenities         String           @default("[]")
+  color             String           @default("from-blue-500 to-blue-600")
+  icon              String           @default("🏢")
+  description       String?
+  active            Boolean          @default(true)
+  order             Int              @default(0)
+  authorId          String
+  establecimientoId String?
+  mediaId           String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  User              User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  Establecimiento   Establecimiento? @relation(fields: [establecimientoId], references: [id])
+  Media             Media?           @relation(fields: [mediaId], references: [id])
+  estamento         Estamento?       @relation(fields: [estamentoId], references: [id])
+  estamentoId       String?
+
+  @@index([active])
+  @@index([order])
+  @@index([authorId])
+  @@index([establecimientoId])
+  @@index([mediaId])
+}

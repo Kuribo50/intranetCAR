@@ -1,4 +1,4 @@
-import { PhoneDirectory } from "@/components/dashboard/PhoneDirectory";
+import PhoneDirectory from "@/components/dashboard/PhoneDirectory";
 
 export default function AnexosPage() {
   return (
